@@ -89,6 +89,9 @@ class MCSimulation:
         # Initialize empty Dataframe to hold simulated prices
         portfolio_cumulative_returns = pd.DataFrame()
         
+        #NEWLINE: Store each dataframe in a list
+        sim_dfs = [] 
+        
         # Run the simulation of projecting stock prices 'nSim' number of times
         for n in range(self.nSim):
         
@@ -112,9 +115,15 @@ class MCSimulation:
     
             # Use the `dot` function with the weights to multiply weights with each column's simulated daily returns
             sim_df = sim_df.dot(self.weights)
+            
+            #NEWLINE: Append each dataframe to the list
+            sim_dfs.append((1 + sim_df.fillna(0)).cumprod())
     
             # Calculate the normalized, cumulative return series
-            portfolio_cumulative_returns[n] = (1 + sim_df.fillna(0)).cumprod()
+            #portfolio_cumulative_returns[n] = (1 + sim_df.fillna(0)).cumprod()
+            
+        #NEWLINE: Use concat instead of slicing (note: is now outside of loop)
+        portfolio_cumulative_returns = pd.concat(sim_dfs, axis=1)
         
         # Set attribute to use in plotting
         self.simulated_return = portfolio_cumulative_returns
@@ -169,4 +178,4 @@ class MCSimulation:
         metrics = self.simulated_return.iloc[-1].describe()
         ci_series = self.confidence_interval
         ci_series.index = ["95% CI Lower","95% CI Upper"]
-        return metrics.series(ci_series)
+        return metrics.append(ci_series)

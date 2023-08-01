@@ -32,7 +32,7 @@ class MCSimulation:
     def __init__(self, portfolio_data, weights="", num_simulation=1000, num_trading_days=252):
         """
         Constructs all the necessary attributes for the MCSimulation object.
-
+​
         Parameters
         ----------
         portfolio_data: pandas.DataFrame
@@ -75,7 +75,7 @@ class MCSimulation:
     def calc_cumulative_return(self):
         """
         Calculates the cumulative return of a stock over time using a Monte Carlo simulation (Brownian motion with drift).
-
+​
         """
         
         # Get closing prices of each stock
@@ -89,6 +89,9 @@ class MCSimulation:
         # Initialize empty Dataframe to hold simulated prices
         portfolio_cumulative_returns = pd.DataFrame()
         
+        #NEWLINE: Store each dataframe in a list
+        sim_dfs = [] 
+        
         # Run the simulation of projecting stock prices 'nSim' number of times
         for n in range(self.nSim):
         
@@ -100,7 +103,7 @@ class MCSimulation:
     
             # For each stock in our data:
             for s in range(len(last_prices)):
-
+​
                 # Simulate the returns for each trading day
                 for i in range(self.nTrading):
         
@@ -112,9 +115,15 @@ class MCSimulation:
     
             # Use the `dot` function with the weights to multiply weights with each column's simulated daily returns
             sim_df = sim_df.dot(self.weights)
+            
+            #NEWLINE: Append each dataframe to the list
+            sim_dfs.append((1 + sim_df.fillna(0)).cumprod())
     
             # Calculate the normalized, cumulative return series
-            portfolio_cumulative_returns[n] = (1 + sim_df.fillna(0)).cumprod()
+            #portfolio_cumulative_returns[n] = (1 + sim_df.fillna(0)).cumprod()
+            
+        #NEWLINE: Use concat instead of slicing (note: is now outside of loop)
+        portfolio_cumulative_returns = pd.concat(sim_dfs, axis=1)
         
         # Set attribute to use in plotting
         self.simulated_return = portfolio_cumulative_returns
@@ -127,7 +136,7 @@ class MCSimulation:
     def plot_simulation(self):
         """
         Visualizes the simulated stock trajectories using calc_cumulative_return method.
-
+​
         """ 
         
         # Check to make sure that simulation has run previously. 
@@ -141,7 +150,7 @@ class MCSimulation:
     def plot_distribution(self):
         """
         Visualizes the distribution of cumulative returns simulated using calc_cumulative_return method.
-
+​
         """
         
         # Check to make sure that simulation has run previously. 
@@ -169,4 +178,4 @@ class MCSimulation:
         metrics = self.simulated_return.iloc[-1].describe()
         ci_series = self.confidence_interval
         ci_series.index = ["95% CI Lower","95% CI Upper"]
-        return metrics.series(ci_series)
+        return metrics.append(ci_series)
